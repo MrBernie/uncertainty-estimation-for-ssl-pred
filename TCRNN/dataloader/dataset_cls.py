@@ -83,6 +83,7 @@ class TSSLDataSet(Dataset):
             # print(audio_data.shape)
         # Compute multi-channel STFT and remove first coefficient and last frame
 
+        # If the stage is prediction, apply VAD before using STFT
         if self.stage == "pred":
             # VAD process for the prediction data
             # print(audio_data.shape)
@@ -165,9 +166,9 @@ class TSSLDataSet(Dataset):
 
         #     if np.sum(vad_out) == 0:
         #         logger.warning(f"No speech detected in {audio_path}")
-        #         return None  # 如果没有语音，返回 None
+        #         return None  # Return none if no speech detected
 
-        #     # 提取音频特征
+        #     # extract audio features
         #     # audio_feat, sample_rate = self._get_audio_features(audio_path)
         #     file_name = os.path.basename(audio_path)
         #     front, ext = os.path.splitext(file_name)

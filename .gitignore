@@ -3,3 +3,5 @@
 *.DS_Store
 TCRNN/data/**/*
 TCRNN/pred_results
+TCRNN/checkpoints*
+TCRNN/connet_logs/*
