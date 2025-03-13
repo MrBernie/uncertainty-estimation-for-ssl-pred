@@ -76,6 +76,8 @@ class TSSLDataSet(Dataset):
         audio_data, samp_freq = sf.read(audio_file)
         # print(audio_data.shape)
         print(audio_file)
+        
+        # down sample the audio data to 16kHz
         if samp_freq != 16000:
             audio_data, samp_freq = librosa.load(audio_file, sr=16000, mono=False)
             audio_data = audio_data.T
