@@ -37,15 +37,24 @@ class DataModule(l.LightningDataModule):
             self.dataset_train = TSSLDataSet(
                 data_dir=os.path.join(self.data_dir, "train"),
                 num_data= 10000,
+                stage="fit",
             )
             self.dataset_val = TSSLDataSet(
                 data_dir=os.path.join(self.data_dir, "dev"),
                 num_data=998,
+                stage="dev",
             )
         elif stage == "test":
             self.dataset_test = TSSLDataSet(
                 data_dir=os.path.join(self.data_dir, "test"),
                 num_data=5000,
+                stage="test",
+            )
+        elif stage == "predict":
+            self.dataset_pred = TSSLDataSet(
+                data_dir=os.path.join(self.data_dir, "pred"),
+                num_data=1000,
+                stage = "pred",
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
@@ -72,6 +81,15 @@ class DataModule(l.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=False
         )
+    def predict_dataloader(self) -> EVAL_DATALOADERS:
+        return DataLoader(
+            self.dataset_pred,
+            batch_size=self.batch_size[1],
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=False
+        )
+
 
 class TrustedRCNN(l.LightningModule):
     def __init__(
@@ -83,6 +101,7 @@ class TrustedRCNN(l.LightningModule):
                 compile: bool = False,
                 device: str = "cuda",
                 lamdba_peochs: int = 10,
+                pred_result_dir: str = "/root/workspace/pred_result/",
                 ):
         """
         Inputs:
@@ -116,6 +135,8 @@ class TrustedRCNN(l.LightningModule):
         self.dev = device
         self.lamdba_epochs = lamdba_peochs
         self.get_metric = PredDOA()
+
+        self.pred_result_dir = pred_result_dir
 
 
     def forward(self, x):
@@ -195,11 +216,20 @@ class TrustedRCNN(l.LightningModule):
             self.log('test/'+m, metric[m].item(), sync_dist=True, on_epoch=True)
 
     def predict_step(self, batch, batch_idx: int):
-
         mic_sig_batch = batch[0]
-        pred_batch = self.forward(mic_sig_batch)
+        file_name = batch[1][0]
 
-        return pred_batch
+        pred_batch = self(mic_sig_batch)  # [2, 24, 180]
+
+        angular_output = torch.argmax(pred_batch, dim=2)[0]
+
+        pred_batch_numpy_array = angular_output.cpu().numpy()
+        print(pred_batch_numpy_array)
+        result_file = os.path.join(self.pred_result_dir , f'{file_name}.txt')
+
+        os.makedirs(self.pred_result_dir, exist_ok=True)
+
+        np.savetxt(result_file, pred_batch_numpy_array, fmt='%.2f', delimiter=',')
 
 # loss function
     def KL(self, alpha, c):

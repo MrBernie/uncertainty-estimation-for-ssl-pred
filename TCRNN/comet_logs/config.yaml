@@ -1,0 +1,132 @@
+# lightning.pytorch==2.1.0
+seed_everything: 2
+trainer:
+  accelerator: gpu
+  strategy: ddp
+  devices: 0,
+  num_nodes: 1
+  precision: 32
+  logger:
+    class_path: lightning.pytorch.loggers.CometLogger
+    init_args:
+      api_key: null
+      save_dir: ./comet_logs
+      project_name: null
+      rest_api_key: null
+      experiment_name: null
+      experiment_key: null
+      offline: false
+      prefix: ''
+      workspace: null
+      log_code: true
+      log_graph: true
+      auto_param_logging: true
+      auto_metric_logging: true
+      parse_args: true
+      auto_output_logging: default
+      log_env_details: true
+      log_git_metadata: true
+      log_git_patch: true
+      disabled: false
+      log_env_gpu: true
+      log_env_host: true
+      display_summary: null
+      log_env_cpu: true
+      log_env_network: true
+      log_env_disk: true
+      display_summary_level: null
+      auto_weight_logging: null
+      auto_metric_step_rate: 10
+      auto_histogram_tensorboard_logging: false
+      auto_histogram_epoch_rate: 1
+      auto_histogram_weight_logging: false
+      auto_histogram_gradient_logging: false
+      auto_histogram_activation_logging: false
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.RichProgressBar
+    init_args:
+      refresh_rate: 1
+      leave: false
+      theme:
+        description: green_yellow
+        progress_bar: green1
+        progress_bar_finished: green1
+        progress_bar_pulse: '#6206E0'
+        batch_progress: green_yellow
+        time: grey82
+        processing_speed: grey82
+        metrics: grey82
+        metrics_text_delimiter: ' '
+        metrics_format: .3f
+      console_kwargs:
+        force_terminal: true
+        no_color: false
+        width: 200
+  fast_dev_run: false
+  max_epochs: 150
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: null
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  val_check_interval: null
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: null
+  log_every_n_steps: null
+  enable_checkpointing: null
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  deterministic: null
+  benchmark: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+model:
+  input_dim: 4
+  num_classes: 180
+  dropout: 0.1
+  lr: 0.001
+  compile: false
+  device: cuda
+  lamdba_peochs: 10
+  pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred-backup/TCRNN/pred_results/
+data:
+  data_dir: /root/workspace/uncertainty-estimation-for-ssl-pred-backup/TCRNN/data/
+  batch_size:
+  - 8
+  - 1
+  num_workers: 0
+model_checkpoint:
+  dirpath: ./checkpoints-mar-6-10epoch
+  filename: epoch{epoch}_valid_loss{valid/loss:.4f}
+  monitor: valid/loss
+  verbose: false
+  save_last: true
+  save_top_k: 10
+  save_weights_only: false
+  mode: min
+  auto_insert_metric_name: false
+  every_n_train_steps: null
+  train_time_interval: null
+  every_n_epochs: 1
+  save_on_train_epoch_end: null
+  enable_version_counter: true
+learning_rate_monitor:
+  logging_interval: epoch
+  log_momentum: false
+  log_weight_decay: false
+return_predictions: null
+ckpt_path: ./checkpoints-mar-6-10epoch/last.ckpt

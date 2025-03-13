@@ -20,8 +20,11 @@ class TSSLDataSet(Dataset):
         data_dir,
         num_data,
         return_acoustic_scene=False,
+        stage="fit",
                  ):
         super().__init__()
+
+        self.stage = stage
 
         self.data_paths = []
         data_names = os.listdir(data_dir)
@@ -96,6 +99,16 @@ class TSSLDataSet(Dataset):
         return self.num_data
     def __getitem__(self, idx):
 
+        if self.stage == "pred":
+            audio_path = self.data_paths[idx]
+            audio_feat = self._get_audio_features(audio_path)
+
+            file_name = os.path.basename(audio_path)
+            front, ext = os.path.splitext(file_name)
+            print(audio_feat.shape)
+            return audio_feat, front
+            
+
         audio_path = self.data_paths[idx]
         acous_path = audio_path.replace("wav", "npz")
 
@@ -113,6 +126,9 @@ class TSSLDataSet(Dataset):
         gts["doa"] = acous_scene_.DOAw.astype(np.float32)
         gts["vad_sources"] = vad_gt.astype(np.float32)
         # logger.debug(f"vad sources shape: {vad_gt.shape}")
+
+        print("DOA: ",gts["doa"])
+
         return audio_feat_, gts
 if __name__ == "__main__":
     data_dir = "/home/data/DCASE2021-task3-dev/foa_dev"
