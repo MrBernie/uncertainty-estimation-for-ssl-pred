@@ -53,7 +53,7 @@ class DataModule(l.LightningDataModule):
         elif stage == "predict":
             self.dataset_pred = TSSLDataSet(
                 data_dir=os.path.join(self.data_dir, "pred"),
-                num_data=1000,
+                num_data=250,
                 stage = "pred",
             )
 
@@ -215,21 +215,47 @@ class TrustedRCNN(l.LightningModule):
         for m in metric:
             self.log('test/'+m, metric[m].item(), sync_dist=True, on_epoch=True)
 
+    # def predict_step(self, batch, batch_idx: int):
+    #     mic_sig_batch = batch[0]
+    #     file_name = batch[1][0]
+
+    #     pred_batch = self(mic_sig_batch)  # [2, 24, 180]
+
+    #     angular_output = torch.argmax(pred_batch, dim=2)[0]
+
+    #     pred_batch_numpy_array = angular_output.cpu().numpy()
+    #     print(pred_batch_numpy_array)
+    #     result_file = os.path.join(self.pred_result_dir , f'{file_name}.txt')
+
+    #     os.makedirs(self.pred_result_dir, exist_ok=True)
+
+    #     np.savetxt(result_file, pred_batch_numpy_array, fmt='%.2f', delimiter=',')
+
     def predict_step(self, batch, batch_idx: int):
         mic_sig_batch = batch[0]
         file_name = batch[1][0]
 
         pred_batch = self(mic_sig_batch)  # [2, 24, 180]
 
+        # print(pred_batch.shape)
+
+        # create dir
+        max_index_dir = os.path.join(self.pred_result_dir, 'max_index')
+        pred_matrix_dir = os.path.join(self.pred_result_dir, 'pred_matrix')
+        
+        os.makedirs(max_index_dir, exist_ok=True)
+        os.makedirs(pred_matrix_dir, exist_ok=True)
+
+        # calculate maximum angle index
         angular_output = torch.argmax(pred_batch, dim=2)[0]
 
-        pred_batch_numpy_array = angular_output.cpu().numpy()
-        print(pred_batch_numpy_array)
-        result_file = os.path.join(self.pred_result_dir , f'{file_name}.txt')
+        # save the maxium angle result to files
+        max_index_file = os.path.join(max_index_dir, f'{file_name}-max-index.txt')
+        np.savetxt(max_index_file, angular_output.cpu().numpy(), fmt='%d', delimiter=',')
 
-        os.makedirs(self.pred_result_dir, exist_ok=True)
-
-        np.savetxt(result_file, pred_batch_numpy_array, fmt='%.2f', delimiter=',')
+        # save the prediction matrix to files
+        pred_matrix_file = os.path.join(pred_matrix_dir, f'{file_name}-pred-matrix.txt')
+        np.savetxt(pred_matrix_file, pred_batch[0].cpu().numpy(), fmt='%.2f', delimiter=',')
 
 # loss function
     def KL(self, alpha, c):

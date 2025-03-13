@@ -1,3 +1,5 @@
 *.pyc
 .history
 *.DS_Store
+TCRNN/data
+TCRNN/pred_results

@@ -72,9 +72,9 @@ model:
   device: cuda
   compile: false
   lamdba_peochs: 10
-  pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred-backup/TCRNN/pred_results/
+  pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
 data:
-  data_dir: /root/workspace/uncertainty-estimation-for-ssl-pred-backup/TCRNN/data/
+  data_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/data/
   batch_size:
   - 8
   - 1
@@ -92,7 +92,7 @@ data:
 #   check_on_train_epoch_end: null
 #   log_rank_zero_only: false
 model_checkpoint:
-  dirpath: ./checkpoints-mar-6-10epoch
+  dirpath: ./checkpoints-mar-5
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
   monitor: valid/loss
   verbose: false
@@ -110,4 +110,4 @@ learning_rate_monitor:
   logging_interval: epoch
   log_momentum: false
   log_weight_decay: false
-ckpt_path:  ./checkpoints-mar-6-10epoch/last.ckpt
+ckpt_path:  ./checkpoints-mar-5/last.ckpt

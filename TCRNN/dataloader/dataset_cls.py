@@ -13,6 +13,8 @@ from dataloader.Dataset import AcousticScene
 from utils.simu import Segmenting_SRPDNN
 from loguru import logger
 
+import webrtcvad
+import librosa
 
 class TSSLDataSet(Dataset):
     def __init__(
@@ -25,7 +27,7 @@ class TSSLDataSet(Dataset):
         super().__init__()
 
         self.stage = stage
-
+        self.vad = webrtcvad.Vad() # init for VAD
         self.data_paths = []
         data_names = os.listdir(data_dir)
         for fname in data_names:
@@ -56,6 +58,7 @@ class TSSLDataSet(Dataset):
             c = [],
         )
         self.return_acoustic_scene = return_acoustic_scene
+    
     def _get_audio_features(self,
                             audio_file: str,
                             ) -> ndarray:
@@ -71,7 +74,36 @@ class TSSLDataSet(Dataset):
         """
         file_info = sf.info(audio_file)
         audio_data, samp_freq = sf.read(audio_file)
+        # print(audio_data.shape)
+        print(audio_file)
+        if samp_freq != 16000:
+            audio_data, samp_freq = librosa.load(audio_file, sr=16000, mono=False)
+            audio_data = audio_data.T
+            samp_freq = 16000
+            # print(audio_data.shape)
         # Compute multi-channel STFT and remove first coefficient and last frame
+
+        if self.stage == "pred":
+            # VAD process for the prediction data
+            # print(audio_data.shape)
+            audio_data_clean, vad_out = self._cleanSilences(audio_data, samp_freq, aggressiveness=3, return_vad=True)
+            # print(np.count_nonzero(audio_data_clean[:,0]), len(audio_data_clean))
+
+            if np.count_nonzero(audio_data_clean[:,0]) < len(audio_data_clean) * 0.66:
+                audio_data_clean, vad_out = self._cleanSilences(audio_data, samp_freq, aggressiveness=2, return_vad=True)
+                # print(np.count_nonzero(audio_data_clean[:,0]), len(audio_data_clean))
+
+            if np.count_nonzero(audio_data_clean[:,0]) < len(audio_data_clean) * 0.66:
+                audio_data_clean, vad_out = self._cleanSilences(audio_data, samp_freq, aggressiveness=1, return_vad=True)
+                # print(np.count_nonzero(audio_data_clean[:,0]), len(audio_data_clean))
+
+            if np.sum(vad_out) == 0:
+                logger.warning(f"No speech detected in {audio_file}")
+                return None  # return None for no speech detected
+            
+            audio_data = audio_data_clean
+            
+        # print(audio_data.shape)
         spectrogram = stft(audio_data,
                            fs=file_info.samplerate,
                            nperseg=512,
@@ -83,9 +115,9 @@ class TSSLDataSet(Dataset):
         spectrogram_real = np.real(spectrogram)
         spectrogram_img = np.imag(spectrogram)
         audio_features = np.concatenate((spectrogram_real, spectrogram_img),axis=0) # 4, 299, 256
-
-        return audio_features.astype(np.float32)
-
+        # print(audio_features.shape)
+        return audio_features.astype(np.float32), file_info.samplerate
+    
     def _gt_acoustic_scene(self,
                            acous_path,):
 
@@ -95,24 +127,64 @@ class TSSLDataSet(Dataset):
         self.acoustic_scene.__dict__ = pickle.loads(dataPickle)
         return self.acoustic_scene
 
+    def _cleanSilences(self, s, sample_rate, aggressiveness=3, return_vad=False):
+        """VAD pre-processing of the prediction audio signal."""
+        self.vad.set_mode(aggressiveness)
+
+        vad_out = np.zeros_like(s)  # init VAD output
+        vad_frame_len = int(10e-3 * sample_rate)  # 10ms every frame
+        n_vad_frames = len(s) // vad_frame_len  # calculate the number of frames
+
+        # VAD every frame
+        for frame_idx in range(n_vad_frames):
+            frame = s[frame_idx * vad_frame_len: (frame_idx + 1) * vad_frame_len]
+            frame_bytes = (frame * 32767).astype('int16').tobytes()  # convert to bytes
+            vad_out[frame_idx * vad_frame_len: (frame_idx + 1) * vad_frame_len] = self.vad.is_speech(frame_bytes, sample_rate)
+
+        s_clean = s * vad_out  # apply the VAD mask
+        return (s_clean, vad_out) if return_vad else s_clean
+
     def __len__(self):
         return self.num_data
     def __getitem__(self, idx):
 
+        audio_path = self.data_paths[idx]
+        audio_feat, sample_rate = self._get_audio_features(audio_path)
+
+        # if self.stage == "pred":
+        #     # VAD process for the prediction data
+        #     # print(len(audio_feat))
+        #     audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=3, return_vad=True)
+        #     # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
+        #     if np.count_nonzero(audio_data_clean) < len(audio_data_clean) * 0.66:
+        #         audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=2, return_vad=True)
+        #         # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
+        #     if np.count_nonzero(audio_data_clean) < len(audio_data_clean) * 0.66:
+        #         audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=1, return_vad=True)
+        #         # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
+
+        #     if np.sum(vad_out) == 0:
+        #         logger.warning(f"No speech detected in {audio_path}")
+        #         return None  # 如果没有语音，返回 None
+
+        #     # 提取音频特征
+        #     # audio_feat, sample_rate = self._get_audio_features(audio_path)
+        #     file_name = os.path.basename(audio_path)
+        #     front, ext = os.path.splitext(file_name)
+        #     return audio_data_clean, front
+            
         if self.stage == "pred":
-            audio_path = self.data_paths[idx]
-            audio_feat = self._get_audio_features(audio_path)
+            # audio_path = self.data_paths[idx]
+            # audio_feat = self._get_audio_features(audio_path)
 
             file_name = os.path.basename(audio_path)
             front, ext = os.path.splitext(file_name)
-            print(audio_feat.shape)
+            # print(audio_feat.shape)
             return audio_feat, front
             
-
         audio_path = self.data_paths[idx]
         acous_path = audio_path.replace("wav", "npz")
 
-        audio_feat = self._get_audio_features(audio_path)
         acous_scene = self._gt_acoustic_scene(acous_path)
 
         audio_feat_, acous_scene_ = self.gt_segmentation(
