@@ -15,7 +15,7 @@ from model.module import PredDOA
 from model.tcrnn import CRNN
 
 class DataModule(l.LightningDataModule):
-    def __init__(self, data_dir: str = "/TSSL/data/", batch_size: tuple = [2, 1], num_workers: int = 8):
+    def __init__(self, data_dir: str = "/TSSL/data/", batch_size: tuple = [2, 1], num_workers: int = 8, pred_result_dir: str = "/root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/"):
         super().__init__()
         """this class is for the datamodule
         Args:
@@ -27,6 +27,7 @@ class DataModule(l.LightningDataModule):
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.pred_result_dir = pred_result_dir
 
     def prepare_data(self) -> None:
         return super().prepare_data()
@@ -53,8 +54,9 @@ class DataModule(l.LightningDataModule):
         elif stage == "predict":
             self.dataset_pred = TSSLDataSet(
                 data_dir=os.path.join(self.data_dir, "pred"),
-                num_data=250,
+                num_data=1000,
                 stage = "pred",
+                pred_result_dir = self.pred_result_dir
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:

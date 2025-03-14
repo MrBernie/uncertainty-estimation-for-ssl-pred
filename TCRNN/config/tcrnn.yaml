@@ -74,6 +74,7 @@ model:
   lamdba_peochs: 10
   pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
 data:
+  pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
   data_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/data/
   batch_size:
   - 8

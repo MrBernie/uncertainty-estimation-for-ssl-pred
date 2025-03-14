@@ -23,6 +23,7 @@ class TSSLDataSet(Dataset):
         num_data,
         return_acoustic_scene=False,
         stage="fit",
+        pred_result_dir: str = None,
                  ):
         super().__init__()
 
@@ -58,6 +59,7 @@ class TSSLDataSet(Dataset):
             c = [],
         )
         self.return_acoustic_scene = return_acoustic_scene
+        self.pred_result_dir = pred_result_dir
     
     def _get_audio_features(self,
                             audio_file: str,
@@ -105,6 +107,20 @@ class TSSLDataSet(Dataset):
                 return None  # return None for no speech detected
             
             audio_data = audio_data_clean
+            pred_result_dir = self.pred_result_dir
+            vad_out_dir = os.path.join(pred_result_dir, "vad_out")
+            if not os.path.exists(vad_out_dir):
+                os.makedirs(vad_out_dir)
+
+            # save the vad result to files
+            audio_filename = os.path.basename(audio_file)
+            audio_filename = os.path.splitext(audio_filename)[0]
+            try:
+                vad_out_file = os.path.join(vad_out_dir, f'{audio_filename}-vad-out.txt')
+                np.savetxt(vad_out_file, vad_out.astype(int), fmt='%d', delimiter=',')
+            except Exception as e:
+                print(f"Failed to save VAD output: {e}")
+            
             
         # print(audio_data.shape)
         spectrogram = stft(audio_data,
@@ -153,28 +169,6 @@ class TSSLDataSet(Dataset):
 
         audio_path = self.data_paths[idx]
         audio_feat, sample_rate = self._get_audio_features(audio_path)
-
-        # if self.stage == "pred":
-        #     # VAD process for the prediction data
-        #     # print(len(audio_feat))
-        #     audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=3, return_vad=True)
-        #     # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
-        #     if np.count_nonzero(audio_data_clean) < len(audio_data_clean) * 0.66:
-        #         audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=2, return_vad=True)
-        #         # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
-        #     if np.count_nonzero(audio_data_clean) < len(audio_data_clean) * 0.66:
-        #         audio_data_clean, vad_out = self._cleanSilences(audio_feat, sample_rate, aggressiveness=1, return_vad=True)
-        #         # print(np.count_nonzero(audio_data_clean), len(audio_data_clean))
-
-        #     if np.sum(vad_out) == 0:
-        #         logger.warning(f"No speech detected in {audio_path}")
-        #         return None  # Return none if no speech detected
-
-        #     # extract audio features
-        #     # audio_feat, sample_rate = self._get_audio_features(audio_path)
-        #     file_name = os.path.basename(audio_path)
-        #     front, ext = os.path.splitext(file_name)
-        #     return audio_data_clean, front
             
         if self.stage == "pred":
             # audio_path = self.data_paths[idx]

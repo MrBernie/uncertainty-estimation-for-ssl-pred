@@ -109,6 +109,7 @@ data:
   - 8
   - 1
   num_workers: 0
+  pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
 model_checkpoint:
   dirpath: ./checkpoints-mar-5
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
