@@ -242,6 +242,7 @@ class TrustedRCNN(l.LightningModule):
         # print(pred_batch.shape)
 
         # create dir
+        os.makedirs(self.pred_result_dir, exist_ok=True)
         max_index_dir = os.path.join(self.pred_result_dir, 'max_index')
         pred_matrix_dir = os.path.join(self.pred_result_dir, 'pred_matrix')
         
