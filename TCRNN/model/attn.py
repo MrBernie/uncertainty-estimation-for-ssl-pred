@@ -29,7 +29,7 @@ def expand_mask(mask):
 
 class MultiheadAttention(nn.Module):
 
-    def __init__(self, input_dim, embed_dim, num_heads):
+    def __init__(self, input_dim, embed_dim, num_heads, residual=False):
         super().__init__()
         assert embed_dim % num_heads == 0, "Embedding dimension must be 0 modulo number of heads."
 
@@ -41,6 +41,7 @@ class MultiheadAttention(nn.Module):
         # Note that in many implementations you see "bias=False" which is optional
         self.qkv_proj = nn.Linear(embed_dim, 3*embed_dim)
         self.o_proj = nn.Linear(embed_dim, embed_dim)
+        self.residual = residual
 
         self._reset_parameters()
 
@@ -54,7 +55,7 @@ class MultiheadAttention(nn.Module):
     def forward(self, x, mask=None, return_attention=False):
         # print(x.size())
         
-    
+        residual = x;
         # logger.debug(f'x shape in att: {x.size()}')
         batch_size, ch_dim, n_fre, n_tim = x.size()
         x = x.reshape(batch_size, n_tim, n_fre, ch_dim)
@@ -73,6 +74,10 @@ class MultiheadAttention(nn.Module):
         values = values.reshape(batch_size, n_tim, n_fre, self.embed_dim)
         o = self.o_proj(values)
         o = o.reshape(batch_size, ch_dim, n_fre, n_tim)
+        
+        if self.residual:
+            o = o + residual
+
         if return_attention:
             return o, attention
         else:

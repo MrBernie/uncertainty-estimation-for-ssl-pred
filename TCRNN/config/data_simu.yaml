@@ -17,4 +17,4 @@ DATA_SIMU:
     LOCATA: ./data/LOCATA
 BASIC_SETTING   :
     NOS: [1]
-    S_STATE: static #MOBILE
+    S_STATE: mobile #MOBILE

@@ -23,7 +23,7 @@ trainer:
       auto_param_logging: true
       auto_metric_logging: true
       parse_args: true
-      auto_output_logging: default
+      auto_output_logging: simple
       log_env_details: true
       log_git_metadata: true
       log_git_patch: true
@@ -42,6 +42,7 @@ trainer:
       auto_histogram_weight_logging: false
       auto_histogram_gradient_logging: false
       auto_histogram_activation_logging: false
+      distributed_node_identifier: null
   callbacks:
   - class_path: lightning.pytorch.callbacks.RichProgressBar
     init_args:
@@ -111,7 +112,7 @@ data:
   num_workers: 0
   pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
 model_checkpoint:
-  dirpath: ./checkpoints-mar-5
+  dirpath: ./checkpoints-apr-15
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
   monitor: valid/loss
   verbose: false
@@ -130,4 +131,4 @@ learning_rate_monitor:
   log_momentum: false
   log_weight_decay: false
 return_predictions: null
-ckpt_path: ./checkpoints-mar-5/last.ckpt
+ckpt_path: ./checkpoints-may-4/last.ckpt

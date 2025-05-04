@@ -66,6 +66,7 @@ trainer:
   default_root_dir: null
 model:
   input_dim: 4
+  # input_dim: 4 
   num_classes: 180
   dropout: 0.1
   lr: 0.001
@@ -93,7 +94,7 @@ data:
 #   check_on_train_epoch_end: null
 #   log_rank_zero_only: false
 model_checkpoint:
-  dirpath: ./checkpoints-mar-5
+  dirpath: ./checkpoints-apr-15 # Change this !!!!!!!
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
   monitor: valid/loss
   verbose: false
@@ -111,4 +112,4 @@ learning_rate_monitor:
   logging_interval: epoch
   log_momentum: false
   log_weight_decay: false
-ckpt_path:  ./checkpoints-mar-5/last.ckpt
+ckpt_path:  ./checkpoints-may-4/last.ckpt # Change this !!!!!!!

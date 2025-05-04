@@ -178,10 +178,10 @@ class TrustedRCNN(l.LightningModule):
         gt_batch = batch[1]
         pred_batch = self.model(mic_sig_batch)
 
-        loss, evidence, U = self.ce_loss_uncertainty(pred_batch=pred_batch, gt_batch=gt_batch, current_epoch=self.current_epoch)
+        # loss, evidence, U = self.ce_loss_uncertainty(pred_batch=pred_batch, gt_batch=gt_batch, current_epoch=self.current_epoch)
 
         # NOTE: the loss function is the cross entropy loss
-        # loss = self.ce_loss(pred_batch=pred_batch, gt_batch=gt_batch)
+        loss = self.ce_loss(pred_batch=pred_batch, gt_batch=gt_batch)
 
         self.log("train/loss", loss, prog_bar=True, on_epoch=True)
 
@@ -192,9 +192,9 @@ class TrustedRCNN(l.LightningModule):
         gt_batch = batch[1]
 
         pred_batch = self(mic_sig_batch)
-        loss, evidence, U = self.ce_loss_uncertainty(pred_batch=pred_batch, gt_batch=gt_batch, current_epoch=self.current_epoch)
+        # loss, evidence, U = self.ce_loss_uncertainty(pred_batch=pred_batch, gt_batch=gt_batch, current_epoch=self.current_epoch)
         # NOTE: the loss function is the cross entropy loss
-        # loss = self.ce_loss(pred_batch=pred_batch, gt_batch=gt_batch)
+        loss = self.ce_loss(pred_batch=pred_batch, gt_batch=gt_batch)
 
         self.log("valid/loss", loss, sync_dist=True, on_epoch=True)
 

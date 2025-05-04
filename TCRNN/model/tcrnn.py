@@ -74,9 +74,10 @@ class CRNN(nn.Module):
 		self.cnn = nn.Sequential(
                 CausCnnBlock(cnn_in_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,2), use_res=res_flag),
 
-                # MultiheadAttention(input_dim=cnn_dim,
-                #                    embed_dim=cnn_dim,
-                #                    num_heads=4),
+                MultiheadAttention(input_dim=cnn_dim,
+                                   embed_dim=cnn_dim,
+                                   num_heads=4,
+								   residual=True),
 
                 nn.MaxPool2d(kernel_size=(4, 1)),
 
@@ -84,25 +85,36 @@ class CRNN(nn.Module):
 
 				# MultiheadAttention(input_dim=cnn_dim,
                 #                    embed_dim=cnn_dim,
-                #                    num_heads=4),
+                #                    num_heads=4,
+				# 				   residual=True),
 
 				nn.MaxPool2d(kernel_size=(2, 1)),
+
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,2), use_res=res_flag),
 
 				# MultiheadAttention(input_dim=cnn_dim,
                 #                    embed_dim=cnn_dim,
-                #                    num_heads=4),
+                #                    num_heads=4,
+				# 				   residual=True),
 
 				nn.MaxPool2d(kernel_size=(2, 2)),
+				
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,2), use_res=res_flag),
-				MultiheadAttention(input_dim=cnn_dim,
-                                   embed_dim=cnn_dim,
-                                   num_heads=4),
-				nn.MaxPool2d(kernel_size=(2, 2)),
-				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,2), use_res=res_flag),
+
 				# MultiheadAttention(input_dim=cnn_dim,
                 #                    embed_dim=cnn_dim,
-                #                    num_heads=4),
+                #                    num_heads=4,
+				# 				   residual=True),
+
+				nn.MaxPool2d(kernel_size=(2, 2)),
+
+				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,2), use_res=res_flag),
+
+				# MultiheadAttention(input_dim=cnn_dim,
+                #                    embed_dim=cnn_dim,
+                #                    num_heads=4,
+				# 				   residual=True),
+
 				nn.MaxPool2d(kernel_size=(2, 3)),
             )
 
@@ -115,8 +127,7 @@ class CRNN(nn.Module):
 		else:
 			rnn_ndirection = 1
 
-		self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=2, batch_first=True,
-		                                 bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
+		# self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=2, batch_first=True, bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
 
 		self.rnn_fc = nn.Sequential(
 			nn.Dropout(dropout_rate),
@@ -131,15 +142,29 @@ class CRNN(nn.Module):
 		fea_cnn = self.cnn(fea)
 		fea_rnn_in = fea_cnn.view(nb, -1, fea_cnn.size(3))
 		fea_rnn_in = fea_rnn_in.permute(0, 2, 1)
-		fea_rnn, _ = self.rnn(fea_rnn_in)
-		fea_rnn_fc = self.rnn_fc(fea_rnn)
+		# fea_rnn, _ = self.rnn(fea_rnn_in)
+		# fea_rnn_fc = self.rnn_fc(fea_rnn)
+		fea_rnn_fc = self.rnn_fc(fea_rnn_in)
 		return fea_rnn_fc
 
 
 
 if __name__ == "__main__":
 	import torch
-	input = torch.randn((2,512)).cuda()
-	net = CRNN()
+	from torchinfo import summary
+	batch_size = 8
+	channels = 4
+	frequency = 256
+	time = int(16000/512) * 10
+	input = torch.randn((batch_size, channels, frequency, time)).cuda()
+	net = CRNN(input_dim=4, output_dim=180).cuda()
 	ouput = net(input)
 	print('# parameters:', sum(param.numel() for param in net.parameters()))
+	summary(
+		net,
+		input_size=(batch_size, channels, frequency, time),  # 输入张量维度
+		col_names=["input_size", "output_size", "kernel_size", "num_params", "params_percent"],  # 显示关键信息
+		# col_names=["input_size", "output_size", "kernel_size", "mult_adds"],
+		depth=3  # 显示模块嵌套层级
+	)
+
