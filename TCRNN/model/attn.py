@@ -55,7 +55,7 @@ class MultiheadAttention(nn.Module):
     def forward(self, x, mask=None, return_attention=False):
         # print(x.size())
         
-        residual = x;
+        residual = x
         # logger.debug(f'x shape in att: {x.size()}')
         batch_size, ch_dim, n_fre, n_tim = x.size()
         x = x.reshape(batch_size, n_tim, n_fre, ch_dim)
