@@ -131,4 +131,4 @@ learning_rate_monitor:
   log_momentum: false
   log_weight_decay: false
 return_predictions: null
-ckpt_path: ./checkpoints-may-5_2/last.ckpt
+ckpt_path: ./checkpoints-may-5_3/last.ckpt
