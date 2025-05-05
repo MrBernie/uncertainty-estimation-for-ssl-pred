@@ -86,7 +86,7 @@ class DataModule(l.LightningDataModule):
     def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(
             self.dataset_pred,
-            batch_size=self.batch_size[1],
+            batch_size=self.batch_size[1], # use less batch size for prediction
             shuffle=False,
             num_workers=self.num_workers,
             pin_memory=False
@@ -236,8 +236,10 @@ class TrustedRCNN(l.LightningModule):
     def predict_step(self, batch, batch_idx: int):
         mic_sig_batch = batch[0]
         file_name = batch[1][0]
+        with torch.no_grad():
+            pred_batch = self(mic_sig_batch)
 
-        pred_batch = self(mic_sig_batch)  # [2, 24, 180]
+        # pred_batch = self(mic_sig_batch)  # [2, 24, 180]
 
         # print(pred_batch.shape)
 

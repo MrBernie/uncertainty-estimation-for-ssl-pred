@@ -2,8 +2,8 @@
 seed_everything: 2
 trainer:
   accelerator: gpu
-  strategy: ddp
-  devices: 0,
+  strategy: fsdp
+  devices: 0,1
   num_nodes: 1
   precision: 32
   logger:
@@ -112,7 +112,7 @@ data:
   num_workers: 0
   pred_result_dir: /root/workspace/uncertainty-estimation-for-ssl-pred/TCRNN/pred_results/
 model_checkpoint:
-  dirpath: ./checkpoints-apr-15
+  dirpath: ./checkpoints
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
   monitor: valid/loss
   verbose: false
@@ -131,4 +131,4 @@ learning_rate_monitor:
   log_momentum: false
   log_weight_decay: false
 return_predictions: null
-ckpt_path: ./checkpoints-may-4/last.ckpt
+ckpt_path: ./checkpoints-may-5/last.ckpt

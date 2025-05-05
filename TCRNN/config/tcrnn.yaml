@@ -2,8 +2,9 @@
 seed_everything: 2
 trainer:
   accelerator: gpu
-  strategy: ddp
-  devices: '0,'
+  # strategy: ddp
+  strategy: fsdp
+  devices: '0,1'
   num_nodes: 1
   precision: 32
   logger:
@@ -93,8 +94,9 @@ data:
 #   divergence_threshold: null
 #   check_on_train_epoch_end: null
 #   log_rank_zero_only: false
+
 model_checkpoint:
-  dirpath: ./checkpoints-apr-15 # Change this !!!!!!!
+  dirpath: ./checkpoints # For Training
   filename: epoch{epoch}_valid_loss{valid/loss:.4f}
   monitor: valid/loss
   verbose: false
@@ -112,4 +114,4 @@ learning_rate_monitor:
   logging_interval: epoch
   log_momentum: false
   log_weight_decay: false
-ckpt_path:  ./checkpoints-may-4/last.ckpt # Change this !!!!!!!
+ckpt_path:  ./checkpoints-may-5/last.ckpt # For Loading
