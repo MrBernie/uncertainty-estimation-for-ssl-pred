@@ -25,20 +25,20 @@ class CausCnnBlock(nn.Module):
 		self.bn1 = nn.BatchNorm2d(planes)
 		self.relu = nn.ReLU(inplace=True)
 
-		# self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel, stride=stride, padding=padding, padding_mode = 'replicate', bias=False)
+		self.conv2 = nn.Conv2d(planes, planes, kernel_size=kernel, stride=stride, padding=padding, padding_mode = 'replicate', bias=False)
 		
 		# conv2 change to 3D conv
         # 这里depth维度kernel=3，stride=1，padding和dilation根据保持维度计算
 		# padding对应dilation大小，保持尺寸
 		# 3D卷积核，depth=3，height=kernel[0]，width=kernel[1]
-		self.conv2 = nn.Conv3d(in_channels=1,
-						 out_channels=1, 
-						 kernel_size=(3, kernel[0], kernel[1]),
-						 stride=(1, stride[0], stride[1]), 
-						 padding=(2, 2, 2), 
-						 dilation=(2, 2, 2), 
-						 padding_mode='replicate', 
-						 bias=False)
+		# self.conv2 = nn.Conv3d(in_channels=1,
+		# 				 out_channels=1, 
+		# 				 kernel_size=(3, kernel[0], kernel[1]),
+		# 				 stride=(1, stride[0], stride[1]), 
+		# 				 padding=(2, 2, 2), 
+		# 				 dilation=(2, 2, 2), 
+		# 				 padding_mode='replicate', 
+		# 				 bias=False)
 		
 		self.bn2 = nn.BatchNorm2d(planes)
 
@@ -63,12 +63,12 @@ class CausCnnBlock(nn.Module):
 		# 	out = out[:,:,:,:-self.pad[1]]
 
 		# for 3D conv
-		out = out.unsqueeze(1)  # (B, 1, C, F, T)
-		out = self.conv2(out)
-		out = out.squeeze(1)  # (B, C, F, T)
-
-
+		# out = out.unsqueeze(1)  # (B, 1, C, F, T)
 		# out = self.conv2(out)
+		# out = out.squeeze(1)  # (B, C, F, T)
+
+
+		out = self.conv2(out)
 		out = self.bn2(out)
 		# if self.pad[1] != 0:
 		# 	out = out[:, :, :, :-self.pad[1]]
@@ -97,6 +97,7 @@ class CRNN(nn.Module):
 		cnn_dim = 64
 		res_flag = True
 		# attn_embed_dim = 256,
+		freq_dim = 256
 		self.cnn = nn.Sequential(
 				# Layer 1
                 CausCnnBlock(cnn_in_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,1), use_res=False),
@@ -106,8 +107,8 @@ class CRNN(nn.Module):
                 #                    num_heads=4,
 				# 				   residual=False),
 
-                # nn.MaxPool2d(kernel_size=(4, 1)),
-				nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(4,1), stride=(4,1), padding=(1,0), bias=False, padding_mode='replicate'),
+                nn.MaxPool2d(kernel_size=(4, 1)),
+				# nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(4,1), stride=(4,1), padding=(1,0), bias=False, padding_mode='replicate'),
 
 				# Layer 2
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,1), use_res=res_flag),
@@ -117,8 +118,8 @@ class CRNN(nn.Module):
                 #                    num_heads=4,
 				# 				   residual=False),
 
-				# nn.MaxPool2d(kernel_size=(2, 1)),
-				nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,1), stride=(2,1), padding=(0,0), bias=False, padding_mode='replicate'),
+				nn.MaxPool2d(kernel_size=(2, 1)),
+				# nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,1), stride=(2,1), padding=(0,0), bias=False, padding_mode='replicate'),
 
 				# Layer 3
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,1), use_res=res_flag),
@@ -128,8 +129,8 @@ class CRNN(nn.Module):
                 #                    num_heads=4,
 				# 				   residual=False),
 
-				# nn.MaxPool2d(kernel_size=(2, 2)),
-				nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,2), stride=(2,2), padding=(0,0), bias=False, padding_mode='replicate'),
+				nn.MaxPool2d(kernel_size=(2, 2)),
+				# nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,2), stride=(2,2), padding=(0,0), bias=False, padding_mode='replicate'),
 				
 				# Layer 4
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,1), use_res=res_flag),
@@ -139,8 +140,8 @@ class CRNN(nn.Module):
                                    num_heads=4,
 								   residual=False),
 
-				# nn.MaxPool2d(kernel_size=(2, 2)),
-				nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,2), stride=(2,2), padding=(0,0), bias=False, padding_mode='replicate'),
+				nn.MaxPool2d(kernel_size=(2, 2)),
+				# nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,2), stride=(2,2), padding=(0,0), bias=False, padding_mode='replicate'),
 
 				# Layer 5
 				CausCnnBlock(cnn_dim, cnn_dim, kernel=(3,3), stride=(1,1), padding=(1,1), use_res=res_flag),
@@ -150,13 +151,14 @@ class CRNN(nn.Module):
                 #                    num_heads=4,
 				# 				   residual=False),
 
-				# nn.MaxPool2d(kernel_size=(2, 3)),
-				nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,3), stride=(2,3), padding=(0,0), bias=False, padding_mode='replicate'),
+				nn.MaxPool2d(kernel_size=(2, 3)),
+				# nn.Conv2d(cnn_dim, cnn_dim, kernel_size=(2,3), stride=(2,3), padding=(0,0), bias=False, padding_mode='replicate'),
             )
 
-		rnn_in_dim = 256
+		cnn_out_dim = 256
+		rnn_in_dim = output_dim
+		# rnn_in_dim = 256
 		# rnn_hid_dim = 256
-		rnn_hid_dim = 128
 		rnn_out_dim = output_dim
 		# rnn_bdflag = False
 		rnn_bdflag = True
@@ -164,14 +166,30 @@ class CRNN(nn.Module):
 			rnn_ndirection = 2
 		else:
 			rnn_ndirection = 1
+		rnn_hid_dim = rnn_in_dim // rnn_ndirection
 
-		# self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=2, batch_first=True, bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
 
-		# self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=1, batch_first=True, bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
+		# # LSTM Input FC
+		# self.rnn_in_fc = nn.Sequential(
+		# 	# nn.Dropout(dropout_rate),
+        #     nn.Linear(in_features=cnn_out_dim, out_features=rnn_in_dim),
+        #     nn.ReLU(inplace=True)
+        # )
 
-		self.rnn_fc = nn.Sequential(
+		# # self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=2, batch_first=True, bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
+
+		# # self.rnn = torch.nn.LSTM(input_size=rnn_in_dim, hidden_size=rnn_hid_dim, num_layers=1, batch_first=True, bias=True, dropout=dropout_rate, bidirectional=rnn_bdflag)
+
+		# # LSTM Output FC
+		# self.rnn_out_fc = nn.Sequential(
+		# 	nn.Dropout(dropout_rate),
+		# 	torch.nn.Linear(in_features=rnn_ndirection * rnn_hid_dim, out_features=rnn_out_dim),
+		# 	# nn.Tanh(),
+		# )
+
+		self.final_fc = nn.Sequential(
 			nn.Dropout(dropout_rate),
-			torch.nn.Linear(in_features=rnn_ndirection * rnn_hid_dim, out_features=rnn_out_dim),
+			torch.nn.Linear(in_features=cnn_out_dim, out_features=rnn_out_dim),
 			# nn.Tanh(),
 		)
 
@@ -183,15 +201,17 @@ class CRNN(nn.Module):
 		fea_rnn_in = fea_cnn.view(nb, -1, fea_cnn.size(3))
 		fea_rnn_in = fea_rnn_in.permute(0, 2, 1)
 
-		# # With LSTM Layer
+		# # With Linear Layer before LSTM
+		# fea_rnn_in = self.rnn_in_fc(fea_rnn_in)
+		# # # With LSTM Layer
 		# fea_rnn, _ = self.rnn(fea_rnn_in)
-		# fea_rnn_fc = self.rnn_fc(fea_rnn)
+		# fea_rnn_out = self.rnn_out_fc(fea_rnn)
 
 		# Without LSTM Layer
-		fea_rnn_fc = self.rnn_fc(fea_rnn_in)
+		fea_rnn_out = self.final_fc(fea_rnn_in)
 
 		# print(f'fea_rnn_fc shape: {fea_rnn_fc.shape}')
-		return fea_rnn_fc
+		return fea_rnn_out
 
 
 
