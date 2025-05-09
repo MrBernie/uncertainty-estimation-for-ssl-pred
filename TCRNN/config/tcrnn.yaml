@@ -114,4 +114,4 @@ learning_rate_monitor:
   logging_interval: epoch
   log_momentum: false
   log_weight_decay: false
-ckpt_path:  ./checkpoints-may-6_5/last.ckpt # For Loading
+ckpt_path:  ./checkpoints-apr-5/last.ckpt # For Loading
